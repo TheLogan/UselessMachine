@@ -1,47 +1,34 @@
-import Finger from "./Finger";
-import { LidOpener } from "./LidOpener";
 import Servo from "./Servo";
-import SimpleReaction from "./R_Simple";
-import AngryReaction from "./R_Angry";
-import HesitantReaction from "./R_Hesitant";
 
-let gameState: 'reacting' | 'idle' = 'idle';
-const switchPin = "B5";
-const finger = new Finger();
-const lidOpener = new LidOpener();
-
-pinMode(switchPin, 'input_pullup');
-const simple = new SimpleReaction(switchPin, lidOpener, finger, () => gameState = 'idle');
-const angry = new AngryReaction(switchPin, lidOpener, finger, () => gameState = 'idle');
-const hesitant = new HesitantReaction(switchPin, lidOpener, finger, () => gameState = 'idle');
-
-const gameLoop = () => {
-  const switchVal = !digitalRead(switchPin);
-
-  if (switchVal && gameState === 'idle') { 
-    gameState = "reacting";
-    let rand = Math.random();
-    if( rand < 0.5) {
-      console.log('simple reaction');
-      
-      simple.runReaction();
-    }else if(rand < 0.8) {
-      console.log('hesitant reaction');
-      
-      hesitant.runReaction();
-    } else {
-      console.log('angry reaction');
-      
-      angry.runReaction();
-    }
-  }
-}
-
-
-
-// if button is flipped, make the servo "tongue" flipped it again.
-// Two servos, one for "tongue" and one for mouth open.
-
-setInterval(gameLoop, 1000);
+const servo = new Servo('B14', 0);
 
 console.log("machine ready");
+let interval: NodeJS.Timer;
+
+function pingpong() {
+  let time = 0;
+  interval = setInterval(() => {
+    if (servo == null) return;
+    time += 200;
+    // let val = Math.sin(time * 2 * Math.PI);
+    let val = 0.35 + Math.sin(time * 0.0004) * 0.1;
+    console.log('val', val);
+    servo.moveTo(val);
+  }, 200);
+}
+
+function stopInterval() {
+  if (interval == null) return;
+  clearInterval(interval);
+  servo.moveTo(0.5);
+}
+
+function moveRandom() {
+  interval = setInterval(() => {
+    if (servo == null) return;
+    let val = Math.random() * 0.4 + 0.3;
+    // convert from 0-1 to 0.3-0.7
+    // let val = 0.5;
+    servo.moveTo(val);
+  }, 2000);
+}
